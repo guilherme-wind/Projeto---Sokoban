@@ -25,23 +25,20 @@ def sokoban(puzzle):
                 objetivos.append((i, j))
 
     estado = []                 # Estado inicial
-    estado.append(expr('Sokoban({})'.format((sx, sy))))
+    estado.append(expr('Sobre(Sokoban, ({}, {}))'.format(sx, sy)))
     for i in range(len(caixas)):
-        estado.append(expr('Caixa({})'.format(caixas[i])))
+        l, c = caixas[i][0], caixas[i][1]
+        estado.append(expr('Caixa(L{},C{})'.format(l, c)))
 
     objetivo = []               # Objetivo
     for i in range(len(objetivos)):
-        objetivo.append(expr('Caixa({})'.format(objetivos[i])))
-
-    acoes = []
-    # Gera as ações
-    for caixa in caixas:
-        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-            if 0 <= caixa[0] + dx < n and 0 <= caixa[1] + dy < len(grid[0]) and grid[caixa[0] + dx][caixa[1] + dy] != '#':
-                a = Action('Move(C,{},{})'.format(caixa[0] + dx, caixa[1] + dy),
-                             precond=expr('Caixa({})'.format((caixa[0], caixa[1]))),
-                             effect=expr('Caixa({})'.format((caixa[0] + dx, caixa[1] + dy))))
-                acoes.append(a)
+        l, c = objetivos[i][0], objetivos[i][1]
+        objetivo.append(expr('Objetivo(L{},C{})'.format(l, c)))
+    
+    acoes = [Action('Move(Sokoban, x, y)',
+                precond='Sobre(Sokoban, x) & Livre(b)',
+                effect='Sobre(b, Mesa) & Livre(x) & ~Sobre(b, x)',
+                domain='Bloco(b) & Bloco(x)')]
 
     # Constrói a instância do problema
     pp = PlanningProblem(initial=estado, goals=objetivo, actions=[], domain=[])         # parece-me bem até aqui

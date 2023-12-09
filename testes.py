@@ -23,18 +23,30 @@ def planning(puzzle):
     for i in range(n):
         for j in range(len(grid[i])):
             if grid[i][j] == '@':
-                estado.append(expr('Sokoban({})'.format((i, j))))
+                estado.append(expr('Sobre(Sokoban, L{}C{})'.format(i, j)))
             elif grid[i][j] == '.':
-                estado.append(expr('Livre({})'.format((i, j))))
+                estado.append(expr('Livre(L{}C{})'.format(i, j)))
             elif grid[i][j] == 'o':
-                estado.append(expr('Objetivo({})'.format((i, j))))
+                estado.append(expr('Sobre(Objetivo, L{}C{})'.format(i, j)))
     print(estado)
 
-    goal = []
+    objetivo = [expr('Sobre(Sokoban, L1C2)')]
     
-    pp = PlanningProblem(initial=estado, goals=goal, actions=[], domain=[])
+    acoes = []
+    for dx, dy, action in [(-1, 0, 'MoverCima(x)'), (1, 0, 'MoverBaixo(x)'), (0, -1, 'MoverEsquerda(x)'), (0, 1, 'MoverDireita(x)')]:
+            acao = Action(expr(action),
+                            precond=(expr('Sobre(Sokoban, x)'),
+                                     expr('Livre(x + dx dy))'.format(sx + dx, sy + dy))),
+                            effect=(expr('~Sobre(Sokoban, L{}C{})'.format(sx, sy)),
+                                    expr('Sobre(Sokoban, L{}C{})'.format(sx + dx, sy + dy))))
+            acoes.append(acao)
+    print(acoes)
+    
+    pp = PlanningProblem(initial=estado, goals=objetivo, actions=[], domain=[])
+    p = ForwardPlan(pp)
+    p.expanded_actions = acoes
 
-    return 
+    return p
 
 
 
@@ -46,7 +58,7 @@ linha2 = "..o\n"
 grelha=linha1+linha2
 try:
     p=planning(grelha)
-    travel_sol = breadth_first_graph_search_plus(p)
+    travel_sol = breadth_first_graph_search_plus(p, display=True)
     if travel_sol:
         print('Solução em',len(travel_sol.solution()),'passos')
     else:
